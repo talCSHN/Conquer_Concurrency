@@ -113,6 +113,23 @@ namespace Concurrency_Overview
             );
 
         }
+        void ExampleFunc1()
+        {
+            try
+            {
+                Parallel.Invoke(() => { throw new Exception(); },
+                () => { throw new Exception(); });
+
+            }
+            catch (AggregateException ex)
+            {
+                ex.Handle(exception =>
+                {
+                    Trace.WriteLine(exception);
+                    return true;
+                });
+            }
+        }
 
         void ProcessPartialArray(double[] array, int begin, int end)
         {
