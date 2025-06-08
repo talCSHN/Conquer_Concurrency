@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.Reactive.Linq;
+using System.Threading.Tasks.Dataflow;
 
 namespace Concurrency_Overview
 {
@@ -145,6 +147,40 @@ namespace Concurrency_Overview
         {
             DoSomethingAsync().Wait();
             DoSomthingAsync1().Wait();
+
+            Observable.Interval(TimeSpan.FromSeconds(1))
+                .Timestamp()
+                .Where(x => x.Value % 2 == 0)
+                .Select(x => x.Timestamp)
+                .Subscribe(x => Trace.WriteLine(x));
+
+            IObservable<DateTimeOffset> timestamps =
+                Observable.Interval(TimeSpan.FromSeconds(1))
+                .Timestamp()
+                .Where(x => x.Value % 2 == 0)
+                .Select(x => x.Timestamp);
+            timestamps.Subscribe(x => Trace.WriteLine(x), ex => Trace.WriteLine(ex));
+
+            try
+            {
+                var multiplyBlock = new TransformBlock<int, int>(item =>
+                {
+                    if (item == 1)
+                    {
+                        throw new InvalidOperationException("Blech.");
+                    }
+                    return item * 2;
+                });
+                var substractBlock = new TransformBlock<int, int>(item => item - 2);
+                multiplyBlock.LinkTo(substractBlock, new DataflowLinkOptions { PropagateCompletion = true });
+                multiplyBlock.Post(1);
+                substractBlock.Completion.Wait();
+            }
+            catch (AggregateException exception)
+            {
+                AggregateException ex = exception.Flatten();
+                Trace.WriteLine(ex.InnerException);
+            }
         }
     }
 }
