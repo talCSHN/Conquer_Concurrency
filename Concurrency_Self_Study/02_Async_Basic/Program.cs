@@ -1,10 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace _02_Async_Basic
 {
     internal class Program
     {
+        public static bool CanBehaveSynchronously { get; private set; }
+
         public static async Task<T> DelayResult<T>(T result, TimeSpan delay)
         {
             await Task.Delay(delay);
@@ -199,6 +202,41 @@ namespace _02_Async_Basic
                 // 여기서 예외 잡힘
             }
         }
+        public static ValueTask<int> MethodAsync()
+        {
+            if (CanBehaveSynchronously)
+            {
+                return new ValueTask<int>(13);
+            }
+            return new ValueTask<int>(SlowMethodAsync());
+        }
+
+        private static async Task<int> SlowMethodAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        private Func<Task> _disposeLogic;
+        public ValueTask DisposeAsync()
+        {
+            if (_disposeLogic == null)
+            {
+                return default;
+            }
+            // 주의: 지금 이 코드는 thread-unsafe임
+            // 여러 스레드가 DisposeAsync 호출 시
+            // 삭제 로직이 두 번 이상 실행 가능성 존재
+            Func<Task> logic = _disposeLogic;
+            _disposeLogic = null;
+            return new ValueTask(logic());
+        }
+        public static async Task ConsumingMethodAsync()
+        {
+            Task<int> task = MethodAsync().AsTask();
+            int value = await task;
+            int anotherValue = await task;
+        }
+
         static async Task Main(string[] args)
         {
             Task<int> task1 = Task.FromResult(3);
