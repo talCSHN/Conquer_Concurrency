@@ -232,9 +232,9 @@ namespace _02_Async_Basic
         }
         public static async Task ConsumingMethodAsync()
         {
-            Task<int> task = MethodAsync().AsTask();
-            int value = await task;
-            int anotherValue = await task;
+            Task<int> task1 = MethodAsync().AsTask();
+            Task<int> task2 = MethodAsync().AsTask();
+            int[] results = await Task.WhenAll(task1, task2);
         }
 
         static async Task Main(string[] args)
