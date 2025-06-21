@@ -1,2 +1,2 @@
 # Conquer_Concurrency
-비동기 프로그래밍 정복
+공부 내용 정리 - [링크](https://velog.io/@wwh11111/posts)
